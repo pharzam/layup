@@ -1,0 +1,2260 @@
+# T-8s13 runs.txt: the logs of every layup run on both targets, verbatim; only the progress lines that end in ': NNN s' are removed.
+# Source: /home/layup/.cache/layup-session/T-8s13/<name>.txt. Times are UTC, read from each log's own first and last line.
+
+## Target 1: pharzam/layup-uat-m2e
+
+### r0.txt
+start 2026-10-21T17:16:45Z
+layup run: [1/9] forge
+layup run: [2/9] plan
+layup run: [3/9] baseline
+layup run: [4/9] root-push
+layup run: [4/9] root-push: root-push: the root commit is the unmodified baseline at a95965534b14b0bf14ad74da0c9a45b5f4aedf88, the commit of LAYUP's own pin a959655; push it with your own login: git -C /home/layup/layup-host/roots/pharzam/layup-uat-m2e push -- https://github.com/pharzam/layup-uat-m2e.git main
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [5/9] read-back
+layup run: [6/9] records
+layup run: [7/9] issues
+layup run: [8/9] watch
+layup run: [9/9] lease
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, empty
+plan	done	the plan free on a public repository
+baseline	done	the baseline at a95965534b14b0bf14ad74da0c9a45b5f4aedf88
+root-push	done	the default branch main exists
+read-back	done	one branch, one root commit, root tree = pin.tree
+records	done	the first records commit: the pin, the briefs, approvers.tsv, start.tsv, the lease
+issues	done	the Intake issue 1, the control issue 2
+watch	done	not-confirmed
+lease	done	released
+exit 0 end 2026-10-21T18:08:52Z
+
+### r1.txt
+start 2026-10-21T18:09:24Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/22] version
+layup run: [4/22] lease
+layup run: [5/22] probe
+layup run: [6/22] rule-gaps
+layup run: [7/22] meaning
+layup run: [8/22] numbering
+layup run: [9/22] spans
+layup run: [10/22] draft
+layup run: [11/22] completeness
+layup run: [12/22] markers
+layup run: [13/22] batch
+layup run: [14/22] answers
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 3, probed and failed 0, skipped 0
+rule-gaps	done	0 rule gaps, in intake/psb.tsv
+meaning	done	10 gaps of meaning, in intake/meaning.tsv
+numbering	done	36 spans, 23 facts, in spec/spans.tsv
+spans	done	the span check passed, in spec/check.tsv
+draft	done	20 rows, in spec/draft.tsv
+completeness	done	0 items, in intake/coverage.tsv
+markers	done	154 markers, 2 with a proposal, in intake/markers.tsv
+batch	done	169 questions, in questions.tsv and the comment of the batch
+answers	done	waiting: no answer yet in the block idea-owner and the block operator
+exit 0 end 2026-10-21T18:13:08Z
+
+### r2.txt
+start 2026-10-21T18:27:23Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/22] version
+layup run: [4/22] lease
+layup run: [5/22] probe
+layup run: [6/22] rule-gaps
+layup run: [7/22] meaning
+layup run: [8/22] numbering
+layup run: [9/22] spans
+layup run: [10/22] draft
+layup run: [11/22] completeness
+layup run: [12/22] markers
+layup run: [13/22] batch
+layup run: [14/22] answers
+layup run: [15/22] answers-review
+layup run: [16/22] follow-up
+layup run: [17/22] follow-up-answers
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	169 answers, in intake/answers.tsv; budget.tsv written
+answers-review	done	169 answers reviewed, 150 open, in intake/answers-review.tsv
+follow-up	done	150 questions asked again, in questions.tsv and the comment of the follow-up
+follow-up-answers	done	waiting: no answer yet to the follow-up in the block operator
+exit 0 end 2026-10-21T18:28:33Z
+
+### r3.txt
+start 2026-10-21T18:30:37Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/22] version
+layup run: [4/22] lease
+layup run: [5/22] probe
+layup run: [6/22] rule-gaps
+layup run: [7/22] meaning
+layup run: [8/22] numbering
+layup run: [9/22] spans
+layup run: [10/22] draft
+layup run: [11/22] completeness
+layup run: [12/22] markers
+layup run: [13/22] batch
+layup run: [14/22] answers
+layup run: [15/22] answers-review
+layup run: [16/22] follow-up
+layup run: [17/22] follow-up-answers
+layup run: [18/22] revision
+layup run: [18/22] revision: revision: attempt 1
+layup run: [19/22] setup
+layup run: [19/22] setup: setup: [1/15] S01
+layup run: [19/22] setup: setup: [2/15] S02
+layup run: [19/22] setup: setup: [3/15] S03
+layup run: [19/22] setup: setup: [4/15] S04
+layup run: [19/22] setup: setup: [5/15] S05
+layup run: [19/22] setup: setup: [6/15] S06
+layup run: [19/22] setup: setup: [7/15] S07
+layup run: [19/22] setup: setup: [8/15] S08
+layup run: [19/22] setup: setup: [9/15] S09
+layup run: [19/22] setup: setup: [10/15] S14
+layup run: [19/22] setup: setup: [1/9] S07
+layup run: [19/22] setup: setup: [2/9] S08
+layup run: [19/22] setup: setup: [3/9] S09
+layup run: [19/22] setup: setup: [4/9] S14
+layup run: [19/22] setup: setup: [5/9] S10
+layup run: [19/22] setup: setup: [1/5] S10
+layup run: [19/22] setup: setup: [2/5] S11
+layup run: [19/22] setup: setup: [3/5] S12
+layup run: [19/22] setup: setup: [4/5] S13
+layup run: [19/22] setup: setup: [5/5] S15
+layup run: [20/22] verify
+layup run: [20/22] verify: setup: [1/15] S01
+layup run: [20/22] verify: setup: [2/15] S02
+layup run: [20/22] verify: setup: [3/15] S03
+layup run: [20/22] verify: setup: [4/15] S04
+layup run: [20/22] verify: setup: [5/15] S05
+layup run: [20/22] verify: setup: [6/15] S06
+layup run: [20/22] verify: setup: [7/15] S07
+layup run: [20/22] verify: setup: [8/15] S08
+layup run: [20/22] verify: setup: [9/15] S09
+layup run: [20/22] verify: setup: [10/15] S14
+layup run: [20/22] verify: setup: [11/15] S10
+layup run: [20/22] verify: setup: [1/5] S10
+layup run: [20/22] verify: setup: [2/5] S11
+layup run: [20/22] verify: setup: [3/5] S12
+layup run: [20/22] verify: setup: [4/5] S13
+layup run: [20/22] verify: setup: [5/5] S15
+layup run: [20/22] verify: verify: [1/18] discipline-tests
+layup run: [20/22] verify: verify: [2/18] pin
+layup run: [20/22] verify: verify: [3/18] kit-history
+layup run: [20/22] verify: verify: [4/18] facts
+layup run: [20/22] verify: verify: [5/18] onboarding
+layup run: [20/22] verify: verify: [6/18] glossary
+layup run: [20/22] verify: verify: [7/18] guardrails
+layup run: [20/22] verify: verify: [8/18] markers
+layup run: [20/22] verify: verify: [9/18] adapted
+layup run: [20/22] verify: verify: [10/18] identity
+layup run: [20/22] verify: verify: [11/18] link-lint
+layup run: [20/22] verify: verify: [12/18] sources
+layup run: [20/22] verify: verify: [13/18] jobs
+layup run: [20/22] verify: verify: [14/18] gate:static
+layup run: [20/22] verify: verify: [15/18] gate:layout
+layup run: [20/22] verify: verify: [16/18] gate:boundary
+layup run: [20/22] verify: verify: [17/18] gate:contract
+layup run: [20/22] verify: verify: [18/18] gate:test
+layup run: [20/22] verify: setup: [1/1] S15
+layup run: [21/22] scaffold-push
+layup run: [21/22] scaffold-push: scaffold-push: run /home/layup/layup-host/work/pharzam/layup-uat-m2e/out/commands.sh with your own login, from a clone with no hooks installed
+layup run: [21/22] scaffold-push: set -eu
+layup run: [21/22] scaffold-push: # the head of the default branch on the forge, and the push of the setup commits onto it: a fast-forward from the root commit when the head is that commit, nothing when it is the head of layup-setup, and a stop when it is neither
+layup run: [21/22] scaffold-push: remote=$(git -C '/home/layup/layup-host/work/pharzam/layup-uat-m2e/target' ls-remote origin 'refs/heads/main')
+layup run: [21/22] scaffold-push: head=$(printf '%s\n' "$remote" | cut -f1)
+layup run: [21/22] scaffold-push: root=$(git -C '/home/layup/layup-host/work/pharzam/layup-uat-m2e/target' rev-list --max-parents=0 refs/heads/layup-setup)
+layup run: [21/22] scaffold-push: setup=$(git -C '/home/layup/layup-host/work/pharzam/layup-uat-m2e/target' rev-parse refs/heads/layup-setup)
+layup run: [21/22] scaffold-push: if [ "$head" = "$root" ]; then
+layup run: [21/22] scaffold-push: 	git -C '/home/layup/layup-host/work/pharzam/layup-uat-m2e/target' push origin layup-setup:main
+layup run: [21/22] scaffold-push: elif [ "$head" != "$setup" ]; then
+layup run: [21/22] scaffold-push: 	echo "the head of main on the forge is '$head', neither the root commit '$root' nor the head of layup-setup '$setup'" >&2
+layup run: [21/22] scaffold-push: 	exit 1
+layup run: [21/22] scaffold-push: fi
+layup run: [21/22] scaffold-push: # the directory of the apply outputs
+layup run: [21/22] scaffold-push: mkdir -p '/home/layup/layup-host/applies/pharzam/layup-uat-m2e'
+layup run: [21/22] scaffold-push: # the apply of the ruleset of the default branch, with the Operator's login, when its output file is missing: the output goes to a temporary file, renamed when gh exits 0
+layup run: [21/22] scaffold-push: if [ ! -e '/home/layup/layup-host/applies/pharzam/layup-uat-m2e/default.json' ]; then
+layup run: [21/22] scaffold-push: 	gh api --method POST /repos/pharzam/layup-uat-m2e/rulesets --input '/home/layup/layup-host/work/pharzam/layup-uat-m2e/out/ruleset-default.json' > '/home/layup/layup-host/applies/pharzam/layup-uat-m2e/default.json.tmp'
+layup run: [21/22] scaffold-push: 	mv '/home/layup/layup-host/applies/pharzam/layup-uat-m2e/default.json.tmp' '/home/layup/layup-host/applies/pharzam/layup-uat-m2e/default.json'
+layup run: [21/22] scaffold-push: fi
+layup run: [21/22] scaffold-push: # the apply of the ruleset of the records branch, with the Operator's login, when its output file is missing: the output goes to a temporary file, renamed when gh exits 0
+layup run: [21/22] scaffold-push: if [ ! -e '/home/layup/layup-host/applies/pharzam/layup-uat-m2e/records.json' ]; then
+layup run: [21/22] scaffold-push: 	gh api --method POST /repos/pharzam/layup-uat-m2e/rulesets --input '/home/layup/layup-host/work/pharzam/layup-uat-m2e/out/ruleset-records.json' > '/home/layup/layup-host/applies/pharzam/layup-uat-m2e/records.json.tmp'
+layup run: [21/22] scaffold-push: 	mv '/home/layup/layup-host/applies/pharzam/layup-uat-m2e/records.json.tmp' '/home/layup/layup-host/applies/pharzam/layup-uat-m2e/records.json'
+layup run: [21/22] scaffold-push: fi
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	150 answers to the follow-up, in intake/answers.tsv; budget.tsv kept; Intake is done
+revision	done	the draft revised, 27 rows of which 4 the success criteria, in spec/draft.tsv
+setup	done	S01 to S14 done, in the work area
+verify	done	the setup verified and its records committed
+scaffold-push	done	waiting for the Operator's pushes and ruleset apply
+exit 0 end 2026-10-21T18:41:29Z
+
+### r4.txt
+start 2026-10-21T19:01:55Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/22] version
+layup run: [4/22] lease
+layup run: [5/22] probe
+layup run: [6/22] rule-gaps
+layup run: [7/22] meaning
+layup run: [8/22] numbering
+layup run: [9/22] spans
+layup run: [10/22] draft
+layup run: [11/22] completeness
+layup run: [12/22] markers
+layup run: [13/22] batch
+layup run: [14/22] answers
+layup run: [15/22] answers-review
+layup run: [16/22] follow-up
+layup run: [17/22] follow-up-answers
+layup run: [18/22] revision
+layup run: [19/22] setup
+layup run: [20/22] verify
+layup run: [21/22] scaffold-push
+layup run: [22/22] forge-check
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	the apply of the rulesets recorded
+forge-check	done	the forge check passed
+exit 0 end 2026-10-21T19:02:13Z
+
+### r5.txt
+start 2026-10-21T19:02:24Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	fail	the session S-c6c8a413: refused file: directory-handling: line 52, column evidence: a fail has — in evidence, not "-"
+exit 1 end 2026-10-21T19:04:06Z
+
+### r5b.txt
+start 2026-10-21T19:05:16Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 10 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 21 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 32 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 43 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 53 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 64 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 75 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 86 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 97 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 107 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 118 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 129 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 140 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 151 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 162 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 172 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 183 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 194 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 205 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 216 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 227 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 238 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 248 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 259 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 270 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 281 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 292 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 303 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 313 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 324 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 335 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 346 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 357 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 367 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 378 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 389 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 400 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 411 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 422 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 432 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 443 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 454 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 465 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 476 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 486 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 497 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 508 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 519 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 530 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 540 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 551 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 562 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 573 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 584 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 594 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 605 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 616 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 627 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 638 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 648 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 659 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 670 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 681 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 692 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 702 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 713 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 724 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 735 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 746 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 756 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 767 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 778 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 789 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 800 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 810 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 821 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 832 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 843 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 854 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 864 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 875 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 886 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 897 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 908 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 919 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 930 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 940 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 951 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 962 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 973 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 983 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 994 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1005 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1016 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1027 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1037 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1048 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1059 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1070 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1081 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1091 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1102 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1113 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1124 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1135 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1146 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1156 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1167 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1178 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1189 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1200 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1210 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1221 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1232 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1243 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1254 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1264 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1275 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1286 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1297 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1308 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1318 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1329 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1340 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1351 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1362 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1372 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1383 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1394 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1405 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1415 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1426 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1437 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1448 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1459 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1469 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1480 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1491 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1502 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1513 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1523 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1534 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1545 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1556 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1567 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1578 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1588 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1599 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1610 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1621 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1632 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1642 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1653 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1664 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1675 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1686 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1696 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1707 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1718 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1729 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1740 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1750 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1761 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1772 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1783 s
+layup run: [4/25] lease: lease: held by the run 97cca2c695401399; its heartbeat has not changed for 1794 s
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	fail	the session S-767ba9b2: refused file: count-api: line 54, column evidence: a fail has — in evidence, not "-"
+exit 1 end 2026-10-21T19:37:35Z
+
+### r5c.txt
+start 2026-10-22T06:13:57Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 10 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 21 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 32 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 43 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 53 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 64 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 75 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 86 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 96 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 107 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 118 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 129 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 140 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 150 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 161 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 172 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 183 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 193 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 204 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 215 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 226 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 236 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 247 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 258 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 269 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 280 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 290 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 301 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 312 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 323 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 334 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 344 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 355 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 366 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 377 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 387 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 398 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 409 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 420 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 430 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 441 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 452 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 463 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 474 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 484 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 495 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 506 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 517 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 528 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 538 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 549 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 561 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 572 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 583 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 593 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 604 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 615 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 627 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 638 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 649 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 660 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 670 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 681 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 692 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 704 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 714 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 725 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 736 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 747 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 758 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 768 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 779 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 790 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 801 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 812 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 822 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 833 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 844 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 855 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 865 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 876 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 887 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 898 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 909 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 920 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 930 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 941 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 952 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 963 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 973 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 984 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 995 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1006 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1017 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1027 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1038 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1049 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1060 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1071 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1081 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1092 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1103 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1114 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1124 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1135 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1146 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1157 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1168 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1178 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1189 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1200 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1211 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1222 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1232 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1243 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1254 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1265 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1276 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1286 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1297 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1308 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1319 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1330 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1340 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1351 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1362 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1373 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1383 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1394 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1405 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1416 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1427 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1437 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1448 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1459 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1470 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1480 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1491 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1502 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1513 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1523 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1534 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1545 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1556 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1567 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1578 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1589 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1600 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1610 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1621 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1632 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1643 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1653 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1664 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1675 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1686 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1697 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1707 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1718 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1729 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1740 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1751 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1761 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1772 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1783 s
+layup run: [4/25] lease: lease: held by the run 20b98bc4e2935f64; its heartbeat has not changed for 1794 s
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 1, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	fail	T-ut9g: the session S-38157561 of the plan review ended crash
+exit 1 end 2026-10-22T06:49:21Z
+
+### r5d.txt
+start 2026-10-22T09:26:42Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 10 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 21 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 32 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 43 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 53 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 64 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 75 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 86 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 97 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 108 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 119 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 130 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 141 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 151 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 162 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 174 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 185 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 196 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 207 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 217 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 228 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 239 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 250 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 261 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 272 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 283 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 293 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 304 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 315 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 326 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 337 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 348 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 358 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 369 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 380 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 391 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 401 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 412 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 423 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 434 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 445 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 455 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 466 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 477 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 488 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 499 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 510 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 520 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 531 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 542 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 553 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 564 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 574 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 585 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 596 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 607 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 618 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 628 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 639 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 650 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 661 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 672 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 682 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 693 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 704 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 715 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 726 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 737 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 747 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 758 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 769 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 780 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 790 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 801 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 812 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 823 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 834 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 844 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 855 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 866 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 877 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 888 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 898 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 909 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 920 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 931 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 942 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 952 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 963 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 974 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 985 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 996 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1006 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1017 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1028 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1039 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1050 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1060 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1071 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1082 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1093 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1104 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1114 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1125 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1136 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1147 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1158 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1169 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1179 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1190 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1201 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1212 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1223 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1233 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1244 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1255 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1266 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1277 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1287 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1298 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1309 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1320 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1331 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1342 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1353 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1363 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1374 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1385 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1396 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1407 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1418 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1428 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1439 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1450 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1461 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1472 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1482 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1494 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1504 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1515 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1526 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1537 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1547 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1558 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1569 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1580 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1591 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1601 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1612 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1623 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1634 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1645 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1656 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1667 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1678 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1688 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1699 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1710 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1721 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1732 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1742 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1753 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1764 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1775 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1785 s
+layup run: [4/25] lease: lease: held by the run d0fc0fa963508772; its heartbeat has not changed for 1796 s
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	fail	T-ut9g: the session S-141cc16c was refused (artifact)
+exit 1 end 2026-10-22T10:00:17Z
+
+### r5e.txt
+start 2026-10-22T11:04:25Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 10 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 21 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 32 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 43 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 53 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 64 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 75 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 86 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 96 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 107 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 118 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 129 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 140 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 151 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 162 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 172 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 183 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 194 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 205 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 216 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 226 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 237 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 248 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 259 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 270 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 280 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 291 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 302 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 313 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 324 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 334 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 345 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 356 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 367 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 377 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 388 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 399 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 410 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 421 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 432 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 443 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 453 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 464 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 475 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 486 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 497 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 507 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 518 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 529 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 540 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 551 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 562 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 572 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 583 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 594 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 605 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 615 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 626 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 637 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 648 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 659 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 670 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 681 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 691 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 702 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 713 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 724 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 735 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 746 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 756 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 767 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 778 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 789 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 800 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 810 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 821 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 832 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 843 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 854 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 864 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 875 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 886 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 897 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 907 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 918 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 929 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 940 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 951 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 962 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 972 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 983 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 994 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1005 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1016 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1026 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1037 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1048 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1059 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1070 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1080 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1091 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1102 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1113 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1124 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1134 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1145 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1156 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1167 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1178 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1188 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1199 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1210 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1221 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1232 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1242 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1253 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1264 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1275 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1286 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1297 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1308 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1318 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1329 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1340 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1351 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1362 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1372 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1383 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1394 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1405 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1416 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1426 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1437 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1448 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1459 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1470 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1480 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1491 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1502 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1513 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1523 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1534 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1545 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1556 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1567 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1577 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1588 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1599 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1610 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1621 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1632 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1642 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1653 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1664 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1675 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1686 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1697 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1707 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1718 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1729 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1740 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1751 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1761 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1772 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1783 s
+layup run: [4/25] lease: lease: held by the run 2f34b41b80834961; its heartbeat has not changed for 1794 s
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	fail	T-ut9g: the handoff plan review → developer is invalid verdict-field comment 6339776504-1
+exit 1 end 2026-10-22T11:36:38Z
+
+### r5f.txt
+start 2026-10-22T12:13:18Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 10 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 21 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 32 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 43 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 53 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 64 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 75 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 86 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 97 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 108 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 118 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 129 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 140 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 151 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 162 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 173 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 183 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 194 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 205 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 216 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 227 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 237 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 248 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 259 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 270 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 281 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 291 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 302 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 313 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 324 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 334 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 345 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 356 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 367 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 378 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 389 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 399 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 410 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 421 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 432 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 443 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 453 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 464 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 475 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 486 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 497 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 507 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 518 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 529 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 540 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 551 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 561 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 572 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 583 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 594 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 605 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 615 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 626 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 637 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 648 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 659 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 670 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 680 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 691 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 702 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 713 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 724 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 734 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 745 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 756 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 767 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 778 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 789 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 799 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 810 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 821 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 832 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 842 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 853 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 864 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 875 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 886 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 897 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 908 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 918 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 929 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 940 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 951 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 962 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 972 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 983 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 994 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1005 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1016 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1027 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1037 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1048 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1059 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1070 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1081 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1091 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1102 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1113 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1124 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1135 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1145 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1156 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1167 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1178 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1189 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1200 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1210 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1221 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1232 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1243 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1254 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1264 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1275 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1286 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1297 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1308 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1318 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1329 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1340 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1351 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1362 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1373 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1383 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1394 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1405 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1416 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1427 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1437 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1448 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1459 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1470 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1481 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1492 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1503 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1514 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1525 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1535 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1546 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1557 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1568 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1579 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1590 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1601 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1611 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1622 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1633 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1644 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1655 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1665 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1676 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1687 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1698 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1709 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1719 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1730 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1741 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1752 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1763 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1773 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1784 s
+layup run: [4/25] lease: lease: held by the run 7def6aadd007308d; its heartbeat has not changed for 1795 s
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	fail	T-ut9g: the handoff plan review → developer is invalid verdict-field comment 6339776504-1
+exit 1 end 2026-10-22T12:43:42Z
+
+### r5g.txt
+start 2026-10-22T14:11:10Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+layup run: gate [1/5] static…
+layup run: gate [1/5] static done (0s)
+layup run: gate [2/5] layout…
+layup run: gate [2/5] layout done (0s)
+layup run: gate [3/5] boundary…
+layup run: gate [3/5] boundary done (0s)
+layup run: gate [4/5] contract…
+layup run: gate [4/5] contract done (0s)
+layup run: gate [5/5] test…
+layup run: gate [5/5] test done (0s)
+layup run: gate [1/5] static…
+layup run: gate [1/5] static done (0s)
+layup run: gate [2/5] layout…
+layup run: gate [2/5] layout done (0s)
+layup run: gate [3/5] boundary…
+layup run: gate [3/5] boundary done (0s)
+layup run: gate [4/5] contract…
+layup run: gate [4/5] contract done (0s)
+layup run: gate [5/5] test…
+layup run: gate [5/5] test done (0s)
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	done	waiting for the Operator: T-ut9g: the review-cycle cap 1 is reached with findings open
+exit 0 end 2026-10-22T14:29:35Z
+
+## Target 2: pharzam/layup-uat-m2e2
+
+### e2-r0.txt
+start 2026-10-22T14:39:07Z
+layup run: [1/9] forge
+layup run: [2/9] plan
+layup run: [3/9] baseline
+layup run: [4/9] root-push
+layup run: [4/9] root-push: root-push: the root commit is the unmodified baseline at a95965534b14b0bf14ad74da0c9a45b5f4aedf88, the commit of LAYUP's own pin a959655; push it with your own login: git -C /home/layup/layup-host/roots/pharzam/layup-uat-m2e2 push -- https://github.com/pharzam/layup-uat-m2e2.git main
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [4/9] root-push: root-push: waiting for the push of the root commit
+layup run: [5/9] read-back
+layup run: [6/9] records
+layup run: [7/9] issues
+layup run: [8/9] watch
+layup run: [9/9] lease
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, empty
+plan	done	the plan free on a public repository
+baseline	done	the baseline at a95965534b14b0bf14ad74da0c9a45b5f4aedf88
+root-push	done	the default branch main exists
+read-back	done	one branch, one root commit, root tree = pin.tree
+records	done	the first records commit: the pin, the briefs, approvers.tsv, start.tsv, the lease
+issues	done	the Intake issue 1, the control issue 2
+watch	done	not-confirmed
+lease	done	released
+exit 0 end 2026-10-22T14:41:29Z
+
+### e2-r1.txt
+start 2026-10-22T14:42:12Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/22] version
+layup run: [4/22] lease
+layup run: [5/22] probe
+layup run: [6/22] rule-gaps
+layup run: [7/22] meaning
+layup run: [8/22] numbering
+layup run: [9/22] spans
+layup run: [10/22] draft
+layup run: [11/22] completeness
+layup run: [12/22] markers
+layup run: [13/22] batch
+layup run: [14/22] answers
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 3, probed and failed 0, skipped 0
+rule-gaps	done	0 rule gaps, in intake/psb.tsv
+meaning	done	10 gaps of meaning, in intake/meaning.tsv
+numbering	done	42 spans, 28 facts, in spec/spans.tsv
+spans	done	the span check passed, in spec/check.tsv
+draft	done	22 rows, in spec/draft.tsv
+completeness	done	0 items, in intake/coverage.tsv
+markers	done	154 markers, 2 with a proposal, in intake/markers.tsv
+batch	done	169 questions, in questions.tsv and the comment of the batch
+answers	done	waiting: no answer yet in the block idea-owner and the block operator
+exit 0 end 2026-10-22T14:45:59Z
+
+### e2-r2.txt
+start 2026-10-22T15:12:43Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/22] version
+layup run: [4/22] lease
+layup run: [5/22] probe
+layup run: [6/22] rule-gaps
+layup run: [7/22] meaning
+layup run: [8/22] numbering
+layup run: [9/22] spans
+layup run: [10/22] draft
+layup run: [11/22] completeness
+layup run: [12/22] markers
+layup run: [13/22] batch
+layup run: [14/22] answers
+layup run: [15/22] answers-review
+layup run: [16/22] follow-up
+layup run: [17/22] follow-up-answers
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	169 answers, in intake/answers.tsv; budget.tsv written
+answers-review	done	169 answers reviewed, 150 open, in intake/answers-review.tsv
+follow-up	done	150 questions asked again, in questions.tsv and the comment of the follow-up
+follow-up-answers	done	waiting: no answer yet to the follow-up in the block operator
+exit 0 end 2026-10-22T15:13:43Z
+
+### e2-r3.txt
+start 2026-10-22T15:53:14Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/22] version
+layup run: [4/22] lease
+layup run: [5/22] probe
+layup run: [6/22] rule-gaps
+layup run: [7/22] meaning
+layup run: [8/22] numbering
+layup run: [9/22] spans
+layup run: [10/22] draft
+layup run: [11/22] completeness
+layup run: [12/22] markers
+layup run: [13/22] batch
+layup run: [14/22] answers
+layup run: [15/22] answers-review
+layup run: [16/22] follow-up
+layup run: [17/22] follow-up-answers
+layup run: [18/22] revision
+layup run: [18/22] revision: revision: attempt 1
+layup run: [19/22] setup
+layup run: [19/22] setup: setup: [1/15] S01
+layup run: [19/22] setup: setup: [2/15] S02
+layup run: [19/22] setup: setup: [3/15] S03
+layup run: [19/22] setup: setup: [4/15] S04
+layup run: [19/22] setup: setup: [5/15] S05
+layup run: [19/22] setup: setup: [6/15] S06
+layup run: [19/22] setup: setup: [7/15] S07
+layup run: [19/22] setup: setup: [8/15] S08
+layup run: [19/22] setup: setup: [9/15] S09
+layup run: [19/22] setup: setup: [10/15] S14
+layup run: [19/22] setup: setup: [1/9] S07
+layup run: [19/22] setup: setup: [2/9] S08
+layup run: [19/22] setup: setup: [3/9] S09
+layup run: [19/22] setup: setup: [4/9] S14
+layup run: [19/22] setup: setup: [5/9] S10
+layup run: [19/22] setup: setup: [1/5] S10
+layup run: [19/22] setup: setup: [2/5] S11
+layup run: [19/22] setup: setup: [3/5] S12
+layup run: [19/22] setup: setup: [4/5] S13
+layup run: [19/22] setup: setup: [5/5] S15
+layup run: [20/22] verify
+layup run: [20/22] verify: setup: [1/15] S01
+layup run: [20/22] verify: setup: [2/15] S02
+layup run: [20/22] verify: setup: [3/15] S03
+layup run: [20/22] verify: setup: [4/15] S04
+layup run: [20/22] verify: setup: [5/15] S05
+layup run: [20/22] verify: setup: [6/15] S06
+layup run: [20/22] verify: setup: [7/15] S07
+layup run: [20/22] verify: setup: [8/15] S08
+layup run: [20/22] verify: setup: [9/15] S09
+layup run: [20/22] verify: setup: [10/15] S14
+layup run: [20/22] verify: setup: [11/15] S10
+layup run: [20/22] verify: setup: [1/5] S10
+layup run: [20/22] verify: setup: [2/5] S11
+layup run: [20/22] verify: setup: [3/5] S12
+layup run: [20/22] verify: setup: [4/5] S13
+layup run: [20/22] verify: setup: [5/5] S15
+layup run: [20/22] verify: verify: [1/18] discipline-tests
+layup run: [20/22] verify: verify: [2/18] pin
+layup run: [20/22] verify: verify: [3/18] kit-history
+layup run: [20/22] verify: verify: [4/18] facts
+layup run: [20/22] verify: verify: [5/18] onboarding
+layup run: [20/22] verify: verify: [6/18] glossary
+layup run: [20/22] verify: verify: [7/18] guardrails
+layup run: [20/22] verify: verify: [8/18] markers
+layup run: [20/22] verify: verify: [9/18] adapted
+layup run: [20/22] verify: verify: [10/18] identity
+layup run: [20/22] verify: verify: [11/18] link-lint
+layup run: [20/22] verify: verify: [12/18] sources
+layup run: [20/22] verify: verify: [13/18] jobs
+layup run: [20/22] verify: verify: [14/18] gate:static
+layup run: [20/22] verify: verify: [15/18] gate:layout
+layup run: [20/22] verify: verify: [16/18] gate:boundary
+layup run: [20/22] verify: verify: [17/18] gate:contract
+layup run: [20/22] verify: verify: [18/18] gate:test
+layup run: [20/22] verify: setup: [1/1] S15
+layup run: [21/22] scaffold-push
+layup run: [21/22] scaffold-push: scaffold-push: run /home/layup/layup-host/work/pharzam/layup-uat-m2e2/out/commands.sh with your own login, from a clone with no hooks installed
+layup run: [21/22] scaffold-push: set -eu
+layup run: [21/22] scaffold-push: # the head of the default branch on the forge, and the push of the setup commits onto it: a fast-forward from the root commit when the head is that commit, nothing when it is the head of layup-setup, and a stop when it is neither
+layup run: [21/22] scaffold-push: remote=$(git -C '/home/layup/layup-host/work/pharzam/layup-uat-m2e2/target' ls-remote origin 'refs/heads/main')
+layup run: [21/22] scaffold-push: head=$(printf '%s\n' "$remote" | cut -f1)
+layup run: [21/22] scaffold-push: root=$(git -C '/home/layup/layup-host/work/pharzam/layup-uat-m2e2/target' rev-list --max-parents=0 refs/heads/layup-setup)
+layup run: [21/22] scaffold-push: setup=$(git -C '/home/layup/layup-host/work/pharzam/layup-uat-m2e2/target' rev-parse refs/heads/layup-setup)
+layup run: [21/22] scaffold-push: if [ "$head" = "$root" ]; then
+layup run: [21/22] scaffold-push: 	git -C '/home/layup/layup-host/work/pharzam/layup-uat-m2e2/target' push origin layup-setup:main
+layup run: [21/22] scaffold-push: elif [ "$head" != "$setup" ]; then
+layup run: [21/22] scaffold-push: 	echo "the head of main on the forge is '$head', neither the root commit '$root' nor the head of layup-setup '$setup'" >&2
+layup run: [21/22] scaffold-push: 	exit 1
+layup run: [21/22] scaffold-push: fi
+layup run: [21/22] scaffold-push: # the directory of the apply outputs
+layup run: [21/22] scaffold-push: mkdir -p '/home/layup/layup-host/applies/pharzam/layup-uat-m2e2'
+layup run: [21/22] scaffold-push: # the apply of the ruleset of the default branch, with the Operator's login, when its output file is missing: the output goes to a temporary file, renamed when gh exits 0
+layup run: [21/22] scaffold-push: if [ ! -e '/home/layup/layup-host/applies/pharzam/layup-uat-m2e2/default.json' ]; then
+layup run: [21/22] scaffold-push: 	gh api --method POST /repos/pharzam/layup-uat-m2e2/rulesets --input '/home/layup/layup-host/work/pharzam/layup-uat-m2e2/out/ruleset-default.json' > '/home/layup/layup-host/applies/pharzam/layup-uat-m2e2/default.json.tmp'
+layup run: [21/22] scaffold-push: 	mv '/home/layup/layup-host/applies/pharzam/layup-uat-m2e2/default.json.tmp' '/home/layup/layup-host/applies/pharzam/layup-uat-m2e2/default.json'
+layup run: [21/22] scaffold-push: fi
+layup run: [21/22] scaffold-push: # the apply of the ruleset of the records branch, with the Operator's login, when its output file is missing: the output goes to a temporary file, renamed when gh exits 0
+layup run: [21/22] scaffold-push: if [ ! -e '/home/layup/layup-host/applies/pharzam/layup-uat-m2e2/records.json' ]; then
+layup run: [21/22] scaffold-push: 	gh api --method POST /repos/pharzam/layup-uat-m2e2/rulesets --input '/home/layup/layup-host/work/pharzam/layup-uat-m2e2/out/ruleset-records.json' > '/home/layup/layup-host/applies/pharzam/layup-uat-m2e2/records.json.tmp'
+layup run: [21/22] scaffold-push: 	mv '/home/layup/layup-host/applies/pharzam/layup-uat-m2e2/records.json.tmp' '/home/layup/layup-host/applies/pharzam/layup-uat-m2e2/records.json'
+layup run: [21/22] scaffold-push: fi
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	150 answers to the follow-up, in intake/answers.tsv; budget.tsv kept; Intake is done
+revision	done	the draft revised, 31 rows of which 4 the success criteria, in spec/draft.tsv
+setup	done	S01 to S14 done, in the work area
+verify	done	the setup verified and its records committed
+scaffold-push	done	waiting for the Operator's pushes and ruleset apply
+exit 0 end 2026-10-22T16:03:45Z
+
+### e2-r4.txt
+start 2026-10-22T16:13:17Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/22] version
+layup run: [4/22] lease
+layup run: [5/22] probe
+layup run: [6/22] rule-gaps
+layup run: [7/22] meaning
+layup run: [8/22] numbering
+layup run: [9/22] spans
+layup run: [10/22] draft
+layup run: [11/22] completeness
+layup run: [12/22] markers
+layup run: [13/22] batch
+layup run: [14/22] answers
+layup run: [15/22] answers-review
+layup run: [16/22] follow-up
+layup run: [17/22] follow-up-answers
+layup run: [18/22] revision
+layup run: [19/22] setup
+layup run: [20/22] verify
+layup run: [21/22] scaffold-push
+layup run: [22/22] forge-check
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	the apply of the rulesets recorded
+forge-check	done	the forge check passed
+exit 0 end 2026-10-22T16:13:35Z
+
+### e2-r5.txt
+start 2026-10-22T16:13:35Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+layup run: gate [1/5] static…
+layup run: gate [1/5] static done (0s)
+layup run: gate [2/5] layout…
+layup run: gate [2/5] layout done (0s)
+layup run: gate [3/5] boundary…
+layup run: gate [3/5] boundary done (0s)
+layup run: gate [4/5] contract…
+layup run: gate [4/5] contract done (0s)
+layup run: gate [5/5] test…
+layup run: gate [5/5] test done (0s)
+layup run: gate [1/5] static…
+layup run: gate [1/5] static done (0s)
+layup run: gate [2/5] layout…
+layup run: gate [2/5] layout done (0s)
+layup run: gate [3/5] boundary…
+layup run: gate [3/5] boundary done (0s)
+layup run: gate [4/5] contract…
+layup run: gate [4/5] contract done (0s)
+layup run: gate [5/5] test…
+layup run: gate [5/5] test done (0s)
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	fail	T-am8b: the session S-06aeffc9 was refused (rule-path c844bf5e1782b4e70f954fc15330f9b2b0e18023599eef8fcf6ca4098e359833)
+exit 1 end 2026-10-22T16:33:32Z
+
+### e2-r6.txt
+start 2026-10-22T18:00:17Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+layup run: gate [1/5] static…
+layup run: gate [1/5] static done (0s)
+layup run: gate [2/5] layout…
+layup run: gate [2/5] layout done (0s)
+layup run: gate [3/5] boundary…
+layup run: gate [3/5] boundary done (0s)
+layup run: gate [4/5] contract…
+layup run: gate [4/5] contract done (0s)
+layup run: gate [5/5] test…
+layup run: gate [5/5] test done (0s)
+layup run: gate [1/5] static…
+layup run: gate [1/5] static done (0s)
+layup run: gate [2/5] layout…
+layup run: gate [2/5] layout done (0s)
+layup run: gate [3/5] boundary…
+layup run: gate [3/5] boundary done (0s)
+layup run: gate [4/5] contract…
+layup run: gate [4/5] contract done (0s)
+layup run: gate [5/5] test…
+layup run: gate [5/5] test done (0s)
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	done	waiting for the Operator: T-am8b: the review-cycle cap 1 is reached with findings open
+exit 0 end 2026-10-22T18:13:10Z
+
+### e2-r7.txt
+start 2026-10-23T05:50:19Z
+layup run: [1/6] forge
+layup run: [2/6] clone
+layup run: [3/25] version
+layup run: [4/25] lease
+layup run: [5/25] forge-check
+layup run: [6/25] probe
+layup run: [7/25] rule-gaps
+layup run: [8/25] meaning
+layup run: [9/25] numbering
+layup run: [10/25] spans
+layup run: [11/25] draft
+layup run: [12/25] completeness
+layup run: [13/25] markers
+layup run: [14/25] batch
+layup run: [15/25] answers
+layup run: [16/25] answers-review
+layup run: [17/25] follow-up
+layup run: [18/25] follow-up-answers
+layup run: [19/25] revision
+layup run: [20/25] setup
+layup run: [21/25] verify
+layup run: [22/25] scaffold-push
+layup run: [23/25] shape
+layup run: [23/25] shape: parameters: applied set brief.lines 110 (comment 6351309814)
+layup run: gate [1/5] static…
+layup run: gate [1/5] static done (0s)
+layup run: gate [2/5] layout…
+layup run: gate [2/5] layout done (0s)
+layup run: gate [3/5] boundary…
+layup run: gate [3/5] boundary done (0s)
+layup run: gate [4/5] contract…
+layup run: gate [4/5] contract done (0s)
+layup run: gate [5/5] test…
+layup run: gate [5/5] test done (0s)
+step	result	detail
+forge	done	the installation token, the six capabilities and the permissions of M2a; a public repository, with layup-records
+clone	done	start.tsv, approvers.tsv and lease.tsv read
+version	done	LAYUP 0.1.0-dev
+lease	done	held by this run
+forge-check	done	the forge check passed
+probe	done	probed and passed 0, probed and failed 0, skipped 0
+rule-gaps	done	done before
+meaning	done	done before
+numbering	done	done before
+spans	done	done before
+draft	done	done before
+completeness	done	done before
+markers	done	done before
+batch	done	done before
+answers	done	done before
+answers-review	done	done before
+follow-up	done	done before
+follow-up-answers	done	done before
+revision	done	done before
+setup	done	done before
+verify	done	done before
+scaffold-push	done	done before
+shape	done	waiting for the Operator: T-am8b: not mergeable, findings recorded
+exit 0 end 2026-10-23T05:57:47Z

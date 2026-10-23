@@ -1,0 +1,108 @@
+# T-8s13 rules.txt: the pre-registered rules of README.md, judged one by one against the evidence.
+# README.md is not edited. Evidence: runs.txt, records.txt, the forge reads of 2026-10-23 (App token, reads only), the two records branches.
+# Judgement words: held / not reached / failed. "not reached" means the demo never got to the step the rule judges, so the rule is neither true nor false.
+# Closing decision: the Operator, comment 6358553535 on #370 (2026-10-23T06:01:44Z): row 68b closes as partly demonstrated; the rest is #495.
+
+## Why rules 2 to 5 and the bet are not reached
+
+The task T-am8b (architecture, pharzam/layup-uat-m2e2) has as its last verdict "not mergeable, findings recorded"
+(comment 6358499230 on #6 of the target, events.tsv n=37, time 2026-10-23T05:57:36Z). That verdict is always a wait, and M2e has no answer for it
+(#370, 6358553535). No bet was made, so there is no bets.tsv and no bets/<m>/brief.md in either records branch, no rendered commit, no loop merge and
+no pull request ready or merged. Rules 2 to 5, the bet and the acceptance are therefore not reached; they move to #495.
+
+## The rules
+
+| Rule | Judgement | Evidence |
+| ---- | --------- | -------- |
+| 1 handoffs, task T-ut9g on m2e (records 4fa50a5fd4b0b048954b70ebed1bc1d67c3d47c7) | failed attempts (2 sessions without a handoff, 1 invalid row), then held for attempts 4 and 5 | see "Rule 1 in detail" |
+| 1 handoffs, task T-yzst on m2e2 (records 8b211b852ca0a1e856943371d325f10ed3f7d2cf) | held for what ran | 6 sessions, 6 handoffs, every one valid (n=4, 7, 12, 15, 21, 24) |
+| 1 handoffs, task T-am8b on m2e2 (same records commit) | failed attempt 1 (1 session without a handoff), held for attempts 2 to 4 | 9 sessions, 8 handoffs, every one valid; S-06aeffc9 refused rule-path |
+| 1, the clause "for each merged task" | not reached | no task has an event merged; T-yzst has the verifier's handoff to close-out (n=24) but no close-out session ran; T-ut9g and T-am8b have none |
+| 2 the rendered commit | not reached | no bet: no bets.tsv, no rendered commit R on either target |
+| 3 gates before human review and before merge | not reached | no pull request was marked ready or had a review requested; no event review_requested, ready_for_review or merged on any of the 7 pull requests (timeline reads, see AC2) |
+| 4 the merge | not reached | no merge: merged_at is null on all 7 pull requests; no merged event in any events.tsv |
+| 5 a weakening pull request is refused | not reached | the Operator's pull requests demo/weaken-gate and demo/control were not opened (checklist item 8 comes after R7 of the loop); the target has only the 7 pull requests of LAYUP |
+| S1 applicable constraints | held on both targets (counted by number; see below) | the options tables hold exactly the constraints of the specification's pre-bet set |
+| S2 a row for every constraint | held on both targets | every option of every decision has one row for each constraint of its table (no option dropped as "missing") |
+| S3 survivors and drops | held on both targets | each of the 8 decisions of m2e and the 7 of m2e2 has at least one survivor; drops are by `fail` only |
+| S4 the brief agrees with basis.tsv | not reached | no brief posted, no bets/<m>/basis.tsv |
+| The brief: at most 100 lines, five headings, one bet row | not reached | no brief |
+| G1 on pharzam/layup-uat-m2e | stopped (floor above the limit), then re-bounded by the Operator | g1.txt: `G1 floor=82 limit=80 stop=yes` at brief.lines 100; the Operator set brief.lines to 110 (6324079354), limit 90, stop=no |
+| G1 on pharzam/layup-uat-m2e2 | would stop (floor above the limit by 1 at 110); not run at the time | computed 2026-10-23: `G1 floor=91 limit=90 stop=yes` at 110 (and limit=80 at 100); see "G1" |
+| G2 | not reached | no bet; G2 (`brief-bound.sh C HEAD`) was not computed on either target |
+| AC1, the demo holds | not met in full | closed as partly demonstrated by the Operator (6358553535) |
+| AC2 the actors | held for the acts that ran | see "AC2" |
+
+## Rule 1 in detail (README rule 1, clauses a to d, read from records.txt and sessions.tsv)
+
+The clause (c) "every handoff event has the detail valid; an `invalid <item>` row, a missing row or a session with none fails the rule" is applied as written.
+Each row below is a failed attempt of the demo and the defect it found (defects.txt); none of them is a failure of an attempt that passed.
+
+| Target, task | Session (attempt) | Result | Handoff events | Reading |
+| ------------ | ----------------- | ------ | -------------- | ------- |
+| m2e, T-ut9g | S-fb051a4c (1) | done | n=4 valid comment 6334607414-1 | held |
+| m2e, T-ut9g | S-38157561 (1) | crash | none | failed (a): a session with no handoff; defect #475 |
+| m2e, T-ut9g | S-141cc16c (2) | done, refused artifact | none | failed (a): defect #478 |
+| m2e, T-ut9g | S-0ef59a25 (3) | done | n=14 `invalid verdict-field comment 6339776504-1`, then n=15 `valid comment 6339776504-1` (2026-10-22T14:11:29Z, after the replan) | failed (c) at n=14 (the plan review's `verdict: reject`); defect #483; the pair was valid at n=15 |
+| m2e, T-ut9g | S-fdcba991, S-ce86366e, S-70f45a11, S-3ed38e9c (4) | done | n=19, 22, 27, 30 all valid | held |
+| m2e, T-ut9g | S-b476d863, S-967fb783 (5) | done | n=36, 39 all valid | held |
+| m2e2, T-yzst | S-4fcb4891, S-2a72f4ce, S-dcafc5f7, S-2409a878 (1); S-abc2007e, S-002af095 (2) | done | n=4, 7, 12, 15, 21, 24 all valid | held; verified head d03c8650303fbdff49986ef5478ed53d11219964 |
+| m2e2, T-am8b | S-7b0b85b1, S-cbc711fa (1) | done | n=4, 7 valid | held |
+| m2e2, T-am8b | S-06aeffc9 (1) | done, refused rule-path | none | failed (a): defect #491 |
+| m2e2, T-am8b | S-663a38fe, S-d9e5873f (2); S-045c56f7, S-0465b007 (3); S-a53fae9b, S-39e41221 (4) | done | n=16, 19, 25, 28, 34, 37 all valid | held |
+
+Counts: m2e T-ut9g has 10 sessions (9 handoff events, 1 invalid, 8 valid; 2 sessions without a handoff: the crash S-38157561 and the refusal S-141cc16c; S-0ef59a25 has the invalid row n=14 and then the valid row n=15); m2e2 T-yzst has 6 sessions and 6 valid handoffs; m2e2 T-am8b has 9 sessions and 8 valid handoffs (S-06aeffc9 has none).
+Clause (b): T-yzst has the four handoffs of its path in order: task plan to plan review n=4, plan review to developer n=7, developer to verifier n=12 and 21, and the verifier's n=24
+(copy 6345803609-1: `head: d03c8650303fbdff49986ef5478ed53d11219964`, `verdict: nothing material in scope`), the handoff to close-out; n=15 is the verifier's `material` verdict of attempt 1 (copy 6345689547-1), back to the developer. The close-out session itself did not run (no loop).
+T-ut9g and T-am8b have no verifier handoff to close-out: T-ut9g stopped at the review-cycle cap (a wait), T-am8b at `not mergeable, findings recorded`. Clause (d): every handoff recorded as valid used a pair of transitions.tsv
+(the twelve default rows, read at the head of layup-records of both targets); the rendered commit's handoff does not exist (no bet).
+The Operator's closing text says "every handoff of the tasks valid": that is true of every handoff that exists in the final attempts; the rows above are the exceptions that the demo found and fixed.
+
+## Shape S1 to S4 (what ran)
+
+The oracle is computed from the records and the base of the target (the head of main when Shape ran), not from the code.
+- m2e (base 46bac1aaed4937070f99b9ef8aa27a18190089a1): NFR R-013 to R-020 (8, shown as NFR-013 to NFR-020), span facts of class `constraint` F-1, F-7, F-8, F-9, F-10, F-11, F-12 (7),
+  no Inv in docs/guardrails.md at the base (0), ADR-0001 to ADR-0009 (9): 24 constraints. Each of the 8 options tables (spec/options/*.tsv) has exactly 24 constraints, each option a row for each.
+- m2e2 (base c04ec636470711d7a46dc2f3b672849be72dc16f): NFR R-018 to R-024 (7), F-1, F-2, F-3, F-10, F-11, F-12 (6), Inv-1 to Inv-8 (8), ADR-0001 to ADR-0009 (9): 30 constraints.
+  Each of the 7 tables has these 30; four tables (count-api, flag-parsing, read-strategy, whitespace-class) carry the 31st, R-008 (a requirement from the answer Q-004, outside the pre-registered set;
+  the three others do not). It is an extra row and drops nothing for lack of a row. The S1 correspondence of NFR-NNN to R-NNN is by number, a reading of this evidence.
+- S3 survivors (no `fail`, no `pass` with `—`) and drops (by `fail`), per decision:
+  - m2e: count-api 2 survive (single-combined-function dropped); directory-handling 2 (walk-recursively dropped); flag-parsing 2 (third-party-pflag dropped); input-reading 3 (no drop); line-counting 1 (bufio-scanner-lines, newline-count-only dropped); package-layout 2 (counting-in-main dropped); utf8-validation 2 (per-chunk-valid, replace-invalid-and-count dropped); whitespace-class 2 (ascii-whitespace dropped). No `pass` with `—` in any table.
+  - m2e2: build-tool 1 (make-wrapper dropped); count-api 1 (the two others dropped); flag-parsing 1 (the two others dropped); module-layout 2 (single-main-package dropped); read-strategy 1 (read-whole-file dropped); utf8-validation 1 (replace-invalid-with-fffd, print-row-while-reading dropped); whitespace-class 2 (ascii-whitespace-set dropped). No `pass` with `—` in any table.
+- S4: not reached.
+The decisions with one survivor are decided; those with several wait for the bet (the contract of #488 and #493).
+
+## G1 (the brief's lower bound), both targets
+
+`sh runs/T-8s13/brief-bound.sh CLONE` on a plain clone, at origin/layup-records, 2026-10-23.
+- pharzam/layup-uat-m2e (records 4fa50a5fd4b0b048954b70ebed1bc1d67c3d47c7): `R=20 M=7 S=23 A_io=14 C_op=2 Q_io=0 E=1 L0=79`, `G1 floor=82 limit=80 stop=yes` (g1.txt, after R3 on 2026-10-21; the comment 6324079354 of #370 is the same figure). The Operator then chose brief.lines 110 (6324079354): limit 90, floor 82, stop=no. G1 stopped the costly sessions as pre-registered, and then passed under the new limit.
+- pharzam/layup-uat-m2e2 (records 8b211b852ca0a1e856943371d325f10ed3f7d2cf): `R=24 M=7 S=28 A_io=14 C_op=2 Q_io=0 E=1 L0=88`; `LINES=100`: `G1 floor=91 limit=80 stop=yes`; `LINES=110`: `G1 floor=91 limit=90 stop=yes`.
+  G1 was not computed on this target when Shape ran. Computed afterwards, the floor is 91, one line above the limit of 90 at brief.lines 110: by the pre-registered rule the demo would have stopped on this target before Shape.
+  The Operator's `set brief.lines 110` on its control issue (comment 6351309814, 2026-10-22T21:06:16Z) came after Shape, with no G2 computed. Finding for #495: the bet on this target needs a brief.lines above 110 or a shorter Intake.
+- G2: not reached on either target (no bet).
+
+## AC2: the actors (authenticated forge answers of 2026-10-23, reads only)
+
+| Act | Actor | Evidence |
+| --- | ----- | -------- |
+| Every records commit, m2e: 129 commits | layup-agent[bot], author and committer | `git log origin/layup-records --format='%an|%cn'`: 129 of `layup-agent[bot]|layup-agent[bot]`; activity API: 129 pushes and 1 branch_creation, all actor layup-agent[bot] |
+| Every records commit, m2e2: 156 commits | layup-agent[bot], author and committer | the same read: 156 commits; activity: 157 pushes and 1 branch_creation, all actor layup-agent[bot] |
+| Issues #1 to #3 and the pull requests #4 and #5 of m2e; #1 to #9 of m2e2 | layup-agent[bot] | `issues?state=all`, `.user.login` |
+| Every comment of LAYUP, m2e (37 comments: 34 by the bot, 3 by pharzam) and m2e2 (44 comments: 39 by the bot, 5 by pharzam) | layup-agent[bot], `performed_via_github_app.slug` layup-agent | `issues/comments` |
+| The answers on #1 of m2e | pharzam (the Operator, no App): 6323442283, 6323453133, 6323499625 | `.user.login`, `performed_via_github_app` null |
+| The answers on #1 of m2e2 | pharzam: 6343642161, 6343646918, 6344586625 | the same read; copies.tsv approver 1675602 |
+| The `set` and the `cycle` grant on #2 of m2e2 | pharzam: 6351309814 (`set brief.lines 110 because the Operator chose a 110-line brief on pharzam/layup#370`) and 6351306431 (`cycle T-am8b because …`), both 2026-10-22T21:06Z | the same read; copies.tsv rows with approver pharzam; parameters.tsv: brief.lines 110, comment 6351309814 |
+| Pull requests of LAYUP (m2e #4, #5; m2e2 #4, #5, #7, #8, #9) | created by layup-agent[bot]; all draft, #4 and #7 closed by the bot, none merged | `pulls?state=all`, `.user.login`, `draft`, `merged_at` |
+| Commit statuses (layup/gates, spec, rules, verify) at the heads of the pull requests | layup-agent[bot] | `commits/H/statuses`, e.g. d03c865: gates success 16:26:04Z, spec success 16:26:08Z, rules success 16:26:11Z, verify pending 16:26:14Z then success 16:27:37Z; the other heads (7f5f973, 19ace65, 65bf23a, c17c28c, 0ebf7d9, a14ecc4) have the three successes and verify failure |
+| The pushes to main: m2e | pharzam: branch_creation main a57ea62 (2026-10-21T18:08:33Z, the root push) and push a57ea62..46bac1a (2026-10-21T19:01:07Z, the setup apply) | `activity`, actor pharzam; the commits themselves are authored by the bot (setup commits) |
+| The pushes to main: m2e2 | pharzam: branch_creation c5c14bb (2026-10-22T14:41:05Z), push c5c14bb..32442ea (15:56:15Z) and 32442ea..c04ec63 (16:12:20Z) | `activity`, actor pharzam |
+| Branch creation of task/T-*/N | layup-agent[bot] | `activity`, branch_creation |
+| The setup apply (two rulesets on each target) | by construction the Operator's login (commands.sh run by the Operator); not read from the forge | the rulesets exist and are active on both targets (m2e 25579592 and 25579594; m2e2 25654658 and 25654661); `rulesets/<id>/history` answers 403 to the App, so the Operator's authorship of the apply is not an authenticated forge answer |
+| Reviews | none | `pulls/N/reviews` is `[]` for all 7 pull requests (m2e #4, #5; m2e2 #4, #5, #7, #8, #9); no review_requested, ready_for_review or merged event in any timeline |
+
+Verdict: AC2 holds for the acts that ran, with the one stated limit (the ruleset apply is the Operator's by construction, not by a forge answer). Every write of LAYUP shows the App's bot; the Operator's acts are the root and setup pushes, the answers, the `set` and the `cycle`.
+
+## The pre-registered scenario
+
+The Given and the Then of README.md were not reached beyond: the target set up by the Scaffold, the brief that fits (not at m2e2, see G1), two harnesses admitted (claude, codex, and devin probed), the questions of Intake answered, the Operator's apply, `layup run` through Shape.
+The Then (a specification task goes through the loop, the idea owner answers the brief with one comment, the rendered commit, the merge at H with the four statuses `success`) was not reached.

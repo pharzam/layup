@@ -60,3 +60,34 @@ G1 floor=79 limit=80 stop=no
 
 76 before decisions, as the plan predicted (R=18, M=3, S=25, A_io=14, C_op=3, Q_io=0, E=1); the floor is 79, so G1 passes with room 21. The Go functions above, run on the
 same four files of that branch, also count 76. This is a comparison, not the test: the target of the demo is `pharzam/layup-uat-m2e`.
+
+## The binaries and the release checks of the demo (added at the close-out, 2026-10-23)
+
+The host binary is `/home/layup/layup-host/bin/layup`. It was rebuilt before a run whenever a defect of the demo was fixed on `main` (a task of its own, defects.txt), with
+`go build -o /home/layup/layup-host/bin/layup ./cmd/layup` (go1.26.10) at the head of this branch after it merged `main`, and the release check `sh runs/T-efmy/release-check.sh <full SHA>` ran on that commit
+(outputs `T-8s13-release-check*.txt` in `/home/layup/.cache/layup-session/`, 141 lines each, every one ending `== PASS`). The size of the change against the release,
+`git diff --stat 01d7da3082333efadb227afda14fd98715edf5c4 COMMIT -- cmd internal go.mod` (tests included), is the last column.
+
+| Release check | Built from (full SHA) | SHA-256 of the binary | Diff against the release | In place for the runs |
+| ------------- | --------------------- | --------------------- | ------------------------ | --------------------- |
+| `T-8s13-release-check.txt` | 20c7cc3772a8d81f6c6c4a97161003327fa95744 | 478351653b13f38b788c523110fea623175b0ccb2c490e11442c003a0456607a (recorded at the build, `T-8s13-binary.txt`, built 2026-10-21T17:07:21Z) | 8 files, +823 -14 | r0 to r5b |
+| `-2` | 48d0a8b5917f2a2d9a31a9e33ad667bcb2c6d2be | 5141367097df5e48d2dd2b295e6b977959dcb6576cab3b7fd3e5325126287dac | 10 files, +861 -17 | r5c |
+| `-3` | 314e5f82dc8adda4b57683abdd96b74e35cd6e68 | 002c08039a6f3f3b29fd8d5e3975b95cfce5c60681fe2b32a7352f424a647922 | 21 files, +1367 -47 | r5d |
+| `-4` | 03d729e967e2dcd35e4f103cec53f53c08ca61ee | 7a0d5cecb67bac9cab4100c2faf5ef0a5c9625a5fc8ea45f7a54661ad54996b1 | 34 files, +1698 -59 | r5e |
+| `-5` | 6f249ac3caa228a3b53562c0c2b6e418d331555d | 01a9bd112ec44536e01a426c3e92ac9d341ee7dd7ea2e93ea19000db0d9b2256 | 48 files, +2256 -87 | r5f |
+| `-6` | b3c87dbc9015b2fdca4288099fbb032d0afa29c8 | 2ed30140b984857a849cbed87d469d0c0b85dde9340675e1ac0ce234f31d16dd | 60 files, +3363 -122 | r5g, e2-r0 to e2-r2 |
+| `-7` | ca02feb89bb4a89de5991dbec5293595a1c67c10 | e2ec40e25226005552c3ebcd8c4e814c754e832b3dc891448a5bed4fd3e7f731 | 61 files, +3414 -122 | e2-r3 to e2-r5 |
+| `-8` | e4a79cda1b4dc42c22e3e6edcc9ee988cfa606be | 6ab75316a571d9e9ba5a2c679de3fe88ae80fd3e2a18d67cb88d6d470ffe6f04 | 65 files, +4188 -135 | e2-r6 |
+| `-9` | e3d0318213a6e33db1a771dc28015a00753f3e64 | a398b85004867e8393c5bc95f8f765b0cae6e0a6dfd8532446f465aecb11d922 (the installed file, read 2026-10-23) | 70 files, +5086 -150 | e2-r7 |
+
+How the hashes are tied to the commits, stated so that nothing is taken for more than it is. Only the first row was written down at the build. For the others the coordinator copied each fresh build to
+`layup.before-T-<next task>` within one to two seconds of the release check of that build (file times in `/home/layup/layup-host/bin/` against the release-check files: `-2` 09:13:42 and
+`layup.before-T-qjjd` 09:13:41; `-3` 12:25:51 and `before-T-0sj8` 12:25:50; `-4` 14:04:11 and `before-T-yngf` 14:04:10; `-5` 15:12:54 and `before-T-t94t` 15:12:53; `-6` 17:10:50 and
+`before-T-paan` 17:10:48; `-7` 18:53:04 and `before-T-dtw6` 18:53:03; `-8` 21:00:04 and `before-T-0xr7` 21:00:03; `-9` 08:50:10 and the installed `layup` 08:50:09, host local time, UTC+3). The first row
+checks this reading: `layup.before-T-c3zv` is 478351653b13…, the recorded build of 20c7cc3. The column "In place for the runs" is the build whose release check precedes the run's start in `runs.txt`
+(for example r5c starts 2026-10-22T06:13:57Z, after the `-2` check at 06:13:42Z). A rebuild of 20c7cc3 in a second worktree gives 5ee307aa5e95…, not 478351653b13…, so a build is
+tied to its path and the hashes cannot be re-derived from a commit; they are the files' own. The old binary before the demo is `layup.before-T-8s13`,
+1b4b96d8de1ccf5227b5d8d13a5e199b5980534a78b2abfbb76e4d11201f2cf1 (the build of T-sdtb at 8b76fdc, M2d).
+
+The test of the bound script above is unchanged: nine cases, nine `ok`, at the step-T head. The G1 figures of both targets are in `rules.txt`; `brief-bound.sh` and its test count as executable files, and everything else in this directory
+(runs.txt, records.txt, rules.txt, defects.txt, this file's tables) is evidence.

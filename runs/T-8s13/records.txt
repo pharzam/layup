@@ -1,0 +1,117 @@
+# T-8s13 records.txt: tasks/<task>/events.tsv of each Shape task, verbatim, read from a plain clone of the target at the head of origin/layup-records.
+# Read 2026-10-23 (date -u: 2026-10-23T06:08:04Z). Command: git -C CLONE show origin/layup-records:tasks/TASK/events.tsv
+
+## pharzam/layup-uat-m2e, task T-ut9g
+## records commit (head of layup-records): 4fa50a5fd4b0b048954b70ebed1bc1d67c3d47c7
+## main of the target at the read: 46bac1aaed4937070f99b9ef8aa27a18190089a1
+n	kind	attempt	session	base	sha	detail	time
+1	attempt	1	—	46bac1aaed4937070f99b9ef8aa27a18190089a1	—	—	2026-10-22T06:46:37Z
+2	session	1	S-fb051a4c	—	—	—	2026-10-22T06:46:39Z
+3	result	1	S-fb051a4c	—	—	done	2026-10-22T06:47:23Z
+4	handoff	1	S-fb051a4c	—	—	valid comment 6334607414-1	2026-10-22T06:47:31Z
+5	session	1	S-38157561	—	—	—	2026-10-22T06:47:33Z
+6	result	1	S-38157561	—	—	crash	2026-10-22T06:49:17Z
+7	attempt	2	—	46bac1aaed4937070f99b9ef8aa27a18190089a1	—	—	2026-10-22T09:57:06Z
+8	session	2	S-141cc16c	—	—	—	2026-10-22T09:57:09Z
+9	result	2	S-141cc16c	—	—	done	2026-10-22T10:00:12Z
+10	refused	2	S-141cc16c	—	—	artifact	2026-10-22T10:00:12Z
+11	attempt	3	—	46bac1aaed4937070f99b9ef8aa27a18190089a1	—	—	2026-10-22T11:34:47Z
+12	session	3	S-0ef59a25	—	—	—	2026-10-22T11:34:49Z
+13	result	3	S-0ef59a25	—	—	done	2026-10-22T11:36:28Z
+14	handoff	3	S-0ef59a25	—	—	invalid verdict-field comment 6339776504-1	2026-10-22T11:36:36Z
+15	handoff	3	S-0ef59a25	—	—	valid comment 6339776504-1	2026-10-22T14:11:29Z
+16	attempt	4	—	46bac1aaed4937070f99b9ef8aa27a18190089a1	—	—	2026-10-22T14:11:31Z
+17	session	4	S-fdcba991	—	—	—	2026-10-22T14:11:34Z
+18	result	4	S-fdcba991	—	—	done	2026-10-22T14:15:02Z
+19	handoff	4	S-fdcba991	—	—	valid comment 6342947501-1	2026-10-22T14:15:12Z
+20	session	4	S-ce86366e	—	—	—	2026-10-22T14:15:14Z
+21	result	4	S-ce86366e	—	—	done	2026-10-22T14:18:08Z
+22	handoff	4	S-ce86366e	—	—	valid comment 6343015058-1	2026-10-22T14:18:17Z
+23	session	4	S-70f45a11	—	—	—	2026-10-22T14:18:20Z
+24	result	4	S-70f45a11	—	—	done	2026-10-22T14:21:06Z
+25	push	4	S-70f45a11	—	7f5f9731c83b86d5b9e924e321e83257c513a163	task/T-ut9g/4	2026-10-22T14:21:08Z
+26	bound	4	S-70f45a11	—	7f5f9731c83b86d5b9e924e321e83257c513a163	task/T-ut9g/4	2026-10-22T14:21:11Z
+27	handoff	4	S-70f45a11	—	—	valid	2026-10-22T14:21:15Z
+28	session	4	S-3ed38e9c	—	—	—	2026-10-22T14:21:37Z
+29	result	4	S-3ed38e9c	—	—	done	2026-10-22T14:23:07Z
+30	handoff	4	S-3ed38e9c	—	—	valid comment 6343125243-1	2026-10-22T14:23:16Z
+31	attempt	5	—	46bac1aaed4937070f99b9ef8aa27a18190089a1	—	—	2026-10-22T14:23:26Z
+32	session	5	S-b476d863	—	—	—	2026-10-22T14:23:28Z
+33	result	5	S-b476d863	—	—	done	2026-10-22T14:27:24Z
+34	push	5	S-b476d863	—	19ace65c576f7d04c6b676530d615bf62a9874b4	task/T-ut9g/5	2026-10-22T14:27:26Z
+35	bound	5	S-b476d863	—	19ace65c576f7d04c6b676530d615bf62a9874b4	task/T-ut9g/5	2026-10-22T14:27:29Z
+36	handoff	5	S-b476d863	—	—	valid	2026-10-22T14:27:33Z
+37	session	5	S-967fb783	—	—	—	2026-10-22T14:27:55Z
+38	result	5	S-967fb783	—	—	done	2026-10-22T14:29:12Z
+39	handoff	5	S-967fb783	—	—	valid comment 6343254235-1	2026-10-22T14:29:23Z
+
+## pharzam/layup-uat-m2e2, task T-yzst
+## records commit (head of layup-records): 8b211b852ca0a1e856943371d325f10ed3f7d2cf
+## main of the target at the read: c04ec636470711d7a46dc2f3b672849be72dc16f
+n	kind	attempt	session	base	sha	detail	time
+1	attempt	1	—	c04ec636470711d7a46dc2f3b672849be72dc16f	—	—	2026-10-22T16:15:17Z
+2	session	1	S-4fcb4891	—	—	—	2026-10-22T16:15:20Z
+3	result	1	S-4fcb4891	—	—	done	2026-10-22T16:15:59Z
+4	handoff	1	S-4fcb4891	—	—	valid comment 6345573489-1	2026-10-22T16:16:08Z
+5	session	1	S-2a72f4ce	—	—	—	2026-10-22T16:16:11Z
+6	result	1	S-2a72f4ce	—	—	done	2026-10-22T16:17:41Z
+7	handoff	1	S-2a72f4ce	—	—	valid comment 6345608266-1	2026-10-22T16:17:50Z
+8	session	1	S-dcafc5f7	—	—	—	2026-10-22T16:17:52Z
+9	result	1	S-dcafc5f7	—	—	done	2026-10-22T16:19:38Z
+10	push	1	S-dcafc5f7	—	65bf23a4380a2794811496e5a42e56203893e2f4	task/T-yzst/1	2026-10-22T16:19:40Z
+11	bound	1	S-dcafc5f7	—	65bf23a4380a2794811496e5a42e56203893e2f4	task/T-yzst/1	2026-10-22T16:19:43Z
+12	handoff	1	S-dcafc5f7	—	—	valid	2026-10-22T16:19:48Z
+13	session	1	S-2409a878	—	—	—	2026-10-22T16:20:12Z
+14	result	1	S-2409a878	—	—	done	2026-10-22T16:21:41Z
+15	handoff	1	S-2409a878	—	—	valid comment 6345689547-1	2026-10-22T16:21:52Z
+16	attempt	2	—	c04ec636470711d7a46dc2f3b672849be72dc16f	—	—	2026-10-22T16:22:03Z
+17	session	2	S-abc2007e	—	—	—	2026-10-22T16:22:06Z
+18	result	2	S-abc2007e	—	—	done	2026-10-22T16:25:43Z
+19	push	2	S-abc2007e	—	d03c8650303fbdff49986ef5478ed53d11219964	task/T-yzst/2	2026-10-22T16:25:45Z
+20	bound	2	S-abc2007e	—	d03c8650303fbdff49986ef5478ed53d11219964	task/T-yzst/2	2026-10-22T16:25:48Z
+21	handoff	2	S-abc2007e	—	—	valid	2026-10-22T16:25:53Z
+22	session	2	S-002af095	—	—	—	2026-10-22T16:26:16Z
+23	result	2	S-002af095	—	—	done	2026-10-22T16:27:19Z
+24	handoff	2	S-002af095	—	—	valid comment 6345803609-1	2026-10-22T16:27:28Z
+
+## pharzam/layup-uat-m2e2, task T-am8b
+## records commit (head of layup-records): 8b211b852ca0a1e856943371d325f10ed3f7d2cf
+## main of the target at the read: c04ec636470711d7a46dc2f3b672849be72dc16f
+n	kind	attempt	session	base	sha	detail	time
+1	attempt	1	—	d03c8650303fbdff49986ef5478ed53d11219964	—	—	2026-10-22T16:27:41Z
+2	session	1	S-7b0b85b1	—	—	—	2026-10-22T16:27:43Z
+3	result	1	S-7b0b85b1	—	—	done	2026-10-22T16:28:20Z
+4	handoff	1	S-7b0b85b1	—	—	valid comment 6345823799-1	2026-10-22T16:28:28Z
+5	session	1	S-cbc711fa	—	—	—	2026-10-22T16:28:31Z
+6	result	1	S-cbc711fa	—	—	done	2026-10-22T16:29:42Z
+7	handoff	1	S-cbc711fa	—	—	valid comment 6345850877-1	2026-10-22T16:29:52Z
+8	session	1	S-06aeffc9	—	—	—	2026-10-22T16:29:55Z
+9	result	1	S-06aeffc9	—	—	done	2026-10-22T16:33:17Z
+10	refused	1	S-06aeffc9	—	—	rule-path c844bf5e1782b4e70f954fc15330f9b2b0e18023599eef8fcf6ca4098e359833	2026-10-22T16:33:21Z
+11	attempt	2	—	d03c8650303fbdff49986ef5478ed53d11219964	—	—	2026-10-22T18:00:44Z
+12	session	2	S-663a38fe	—	—	—	2026-10-22T18:00:47Z
+13	result	2	S-663a38fe	—	—	done	2026-10-22T18:03:47Z
+14	push	2	S-663a38fe	—	c17c28c8c9c3578056f960aa98ba907bfbd15fc7	task/T-am8b/2	2026-10-22T18:03:50Z
+15	bound	2	S-663a38fe	—	c17c28c8c9c3578056f960aa98ba907bfbd15fc7	task/T-am8b/2	2026-10-22T18:03:56Z
+16	handoff	2	S-663a38fe	—	—	valid	2026-10-22T18:04:01Z
+17	session	2	S-d9e5873f	—	—	—	2026-10-22T18:04:27Z
+18	result	2	S-d9e5873f	—	—	done	2026-10-22T18:05:43Z
+19	handoff	2	S-d9e5873f	—	—	valid comment 6347751487-1	2026-10-22T18:05:54Z
+20	attempt	3	—	d03c8650303fbdff49986ef5478ed53d11219964	—	—	2026-10-22T18:06:05Z
+21	session	3	S-045c56f7	—	—	—	2026-10-22T18:06:08Z
+22	result	3	S-045c56f7	—	—	done	2026-10-22T18:10:19Z
+23	push	3	S-045c56f7	—	0ebf7d9e0f4f91881cce4d1368c9e62826fcc98a	task/T-am8b/3	2026-10-22T18:10:22Z
+24	bound	3	S-045c56f7	—	0ebf7d9e0f4f91881cce4d1368c9e62826fcc98a	task/T-am8b/3	2026-10-22T18:10:30Z
+25	handoff	3	S-045c56f7	—	—	valid	2026-10-22T18:10:35Z
+26	session	3	S-0465b007	—	—	—	2026-10-22T18:11:11Z
+27	result	3	S-0465b007	—	—	done	2026-10-22T18:12:45Z
+28	handoff	3	S-0465b007	—	—	valid comment 6347893425-1	2026-10-22T18:12:55Z
+29	attempt	4	—	d03c8650303fbdff49986ef5478ed53d11219964	—	—	2026-10-23T05:50:55Z
+30	session	4	S-a53fae9b	—	—	—	2026-10-23T05:50:57Z
+31	result	4	S-a53fae9b	—	—	done	2026-10-23T05:55:37Z
+32	push	4	S-a53fae9b	—	a14ecc47c4792eb6106cda07f970abacc1af373e	task/T-am8b/4	2026-10-23T05:55:38Z
+33	bound	4	S-a53fae9b	—	a14ecc47c4792eb6106cda07f970abacc1af373e	task/T-am8b/4	2026-10-23T05:55:42Z
+34	handoff	4	S-a53fae9b	—	—	valid	2026-10-23T05:55:46Z
+35	session	4	S-39e41221	—	—	—	2026-10-23T05:56:06Z
+36	result	4	S-39e41221	—	—	done	2026-10-23T05:57:28Z
+37	handoff	4	S-39e41221	—	—	valid comment 6358499230-1	2026-10-23T05:57:36Z
