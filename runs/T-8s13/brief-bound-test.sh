@@ -42,4 +42,14 @@ d=$w/g1-79; fx $d 62 1 ""; done_ $d
 want=$(G1 62 1 0 0 0 0 1 76 79 no); chk "G1 floor 79 (76 plus one decision of two options) passes" $d
 d=$w/g1-81; fx $d 64 1 ""; done_ $d
 want=$(G1 64 1 0 0 0 0 1 78 81 yes); chk "G1 floor 81 stops" $d
+d=$w/g2-81tab; fx $d 62 0 ""; opts $d 2; tab=$(printf '\t'); sed -i "s/^| Metric | Fact |\$/|${tab}Metric${tab}|${tab}Fact${tab}|/" $d/docs/prd/PRD-0001.md; done_ $d
+want="$(G1 62 0 0 0 0 0 1 76 79 no)
+D=1 O=3 M_prd=2 L=81 room=19 G2=fail"; chk "tabs around the table header cells count as spaces (internal/spec/full.go tableCells)" $d HEAD
+# A failed git read must end the script non-zero before any G1 or G2 line that could pass (guardrails, check each read's status).
+chkfail() { name=$1; shift; got=$(sh "$bb" "$@" 2>&1); rc=$?
+  case $got in *G2=pass*|*stop=no*) rc=0;; esac
+  if [ "$rc" -ne 0 ]; then echo "ok $name"; else bad=1; printf 'FAIL %s\nwant: non-zero exit, no G2=pass, no stop=no\ngot:\n%s\n' "$name" "$got"; fi; }
+chkfail "an unreadable head fails" $w/g2-81 no-such-verified-head
+d=$w/noref; fx $d 62 0 ""; opts $d 2; git -C $d add -A; git -C $d -c user.name=t -c user.email=t@t commit -q -m x
+chkfail "a missing records ref fails" $d HEAD
 exit $bad

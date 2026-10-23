@@ -5,7 +5,9 @@
 # table, D and O from spec/options/*.tsv, L and room. Reads git only; brief.lines is LINES (default 100); G2 needs room >= 20.
 set -eu
 clone=$1; head=${2:-}; lines=${LINES:-100}; r=origin/layup-records; t=$(mktemp -d); trap 'rm -rf "$t"' EXIT
-for f in spec/draft.tsv spec/spans.tsv questions.tsv intake/answers.tsv; do git -C "$clone" show "$r:$f" >"$t/$(basename "$f")"; done
+g() { out=$(git -C "$clone" "$@") || { echo "brief-bound: git $* failed" >&2; exit 2; }; }  # every git read is checked before its output is parsed
+for f in spec/draft.tsv spec/spans.tsv questions.tsv intake/answers.tsv; do g show "$r:$f"; printf '%s\n' "$out" >"$t/$(basename "$f")"; done
+[ -z "$head" ] || g rev-parse --verify -q "$head^{commit}"
 eval "$(awk -F'\t' -v D='—' 'FNR==1{f++; next}
 f==1{if($2=="requirement"||$2=="non-functional")R++; if($2=="success-criterion")M++}
 f==2&&$3!=D{S++; lo[$3]=$1+0; hi[$3]=$2+0; cl[$3]=$4; fo[++nf]=$3}
@@ -18,14 +20,19 @@ END{for(i=1;i<=n;i++){x=id[i]; if(src[x]!="follow-up"&&(state[x]=="open"||(state
   printf "R=%d;M=%d;S=%d;A=%d;C=%d;Q=%d;E=%d\n", R, M, S, A, C, Q, (op||no==0)}' "$t/draft.tsv" "$t/spans.tsv" "$t/questions.tsv" "$t/answers.tsv")"
 mx() { [ "$1" -gt 1 ] && echo "$1" || echo 1; }
 L0=$((12 + R + $(mx "$M") + Q + E + S + A + C))
+mx() { [ "$1" -gt 1 ] && echo "$1" || echo 1; }
+L0=$((12 + R + $(mx "$M") + Q + E + S + A + C))
+if [ -n "$head" ]; then
+  g ls-tree --name-only "$head" docs/prd/; prds=$(printf '%s\n' "$out" | grep '/PRD-.*\.md$' | sort || true); : >"$t/prd.md"
+  for p in $prds; do g show "$head:$p"; printf '%s\n' "$out" >>"$t/prd.md"; done
+  Mp=$(awk '/^#/{l=match($0,/[^#]/)-1; if(l<=2)m=(l==2&&/Success metrics/); p=""; ok=0; next}
+    /^[ \t]*\|/{if($0~/^[ \t|:-]+$/&&p!=""){ok=(m&&p~/\|[ \t]*Fact[ \t]*(\||$)/); next} if(ok)n++; p=$0; next} {p=""; ok=0} END{print n+0}' "$t/prd.md")
+  Dn=0; Ot=0; g ls-tree --name-only "$r" spec/options/; opts=$(printf '%s\n' "$out" | grep '\.tsv$' || true)
+  for p in $opts; do
+    g show "$r:$p"; o=$(printf '%s\n' "$out" | awk -F'\t' 'NR>1&&!s[$1]++{n++} END{print n+0}'); Dn=$((Dn + 1)); Ot=$((Ot + o)); done
+  L=$((12 + R + $(mx "$Mp") + Dn + Ot + Q + E + S + A + C))
+fi
 echo "R=$R M=$M S=$S A_io=$A C_op=$C Q_io=$Q E=$E L0=$L0"
 echo "G1 floor=$((L0 + 3)) limit=$((lines - 20)) stop=$([ $((L0 + 3)) -gt $((lines - 20)) ] && echo yes || echo no)"
 [ -n "$head" ] || exit 0
-Mp=$(for p in $(git -C "$clone" ls-tree --name-only "$head" docs/prd/ | grep '/PRD-.*\.md$' | sort); do git -C "$clone" show "$head:$p"; done |
-  awk '/^#/{l=match($0,/[^#]/)-1; if(l<=2)m=(l==2&&/Success metrics/); p=""; ok=0; next}
-  /^[ \t]*\|/{if($0~/^[ \t|:-]+$/&&p!=""){ok=(m&&p~/\| *Fact *(\||$)/); next} if(ok)n++; p=$0; next} {p=""; ok=0} END{print n+0}')
-Dn=0; Ot=0
-for p in $(git -C "$clone" ls-tree --name-only "$r" spec/options/ | grep '\.tsv$'); do
-  o=$(git -C "$clone" show "$r:$p" | awk -F'\t' 'NR>1&&!s[$1]++{n++} END{print n+0}'); Dn=$((Dn + 1)); Ot=$((Ot + o)); done
-L=$((12 + R + $(mx "$Mp") + Dn + Ot + Q + E + S + A + C))
 echo "D=$Dn O=$Ot M_prd=$Mp L=$L room=$((lines - L)) G2=$([ $((lines - L)) -ge 20 ] && echo pass || echo fail)"

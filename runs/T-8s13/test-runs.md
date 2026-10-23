@@ -61,6 +61,18 @@ G1 floor=79 limit=80 stop=no
 76 before decisions, as the plan predicted (R=18, M=3, S=25, A_io=14, C_op=3, Q_io=0, E=1); the floor is 79, so G1 passes with room 21. The Go functions above, run on the
 same four files of that branch, also count 76. This is a comparison, not the test: the target of the demo is `pharzam/layup-uat-m2e`.
 
+## Round 1 (F1, F2): three cases added, red first, then green (2026-10-23)
+
+Round 1 of the review found that `brief-bound.sh` hid git failures behind pipelines (F1) and read a table header with tabs as no header (F2). The test got three cases:
+the header `|\tMetric\t|\t...Fact\t|` on the 81-line fixture (wants `M_prd=2 L=81 room=19 G2=fail`, as the space form), an unreadable head (`no-such-verified-head`) and a missing
+records ref; the last two want a non-zero exit and neither `G2=pass` nor `stop=no` in the output.
+
+- Red: `sh runs/T-8s13/brief-bound-test.sh` on the script of 7a64e43, 2026-10-23T06:28:59Z to 06:29:00Z (from `date -u`). Nine `ok` and two `FAIL`. The tab case printed `M_prd=0 L=80 room=20 G2=pass`.
+  The unreadable head printed `fatal: Not a valid object name`, then `G2=pass`, and the script exited 0. The third case (missing ref) was already green: its first read, under `set -e`, stopped the script before any line.
+- Fix: every git read goes through one function that checks the status before the output is parsed (exit 2 and a message); the head is verified first; all reads run before the first line is printed;
+  the header test trims spaces and tabs, as `tableCells` of `internal/spec/full.go` does.
+- Green: the same command, 2026-10-23T06:29:08Z, exit 0, twelve cases, twelve `ok`.
+
 ## The binaries and the release checks of the demo (added at the close-out, 2026-10-23)
 
 The host binary is `/home/layup/layup-host/bin/layup`. It was rebuilt before a run whenever a defect of the demo was fixed on `main` (a task of its own, defects.txt), with
@@ -89,5 +101,5 @@ checks this reading: `layup.before-T-c3zv` is 478351653b13…, the recorded buil
 tied to its path and the hashes cannot be re-derived from a commit; they are the files' own. The old binary before the demo is `layup.before-T-8s13`,
 1b4b96d8de1ccf5227b5d8d13a5e199b5980534a78b2abfbb76e4d11201f2cf1 (the build of T-sdtb at 8b76fdc, M2d).
 
-The test of the bound script above is unchanged: nine cases, nine `ok`, at the step-T head. The G1 figures of both targets are in `rules.txt`; `brief-bound.sh` and its test count as executable files, and everything else in this directory
+The test of the bound script above ran nine cases, nine `ok`, at the step-T head; round 1 added three (the section above), twelve in all. The G1 figures of both targets are in `rules.txt`; `brief-bound.sh` and its test count as executable files, and everything else in this directory
 (runs.txt, records.txt, rules.txt, defects.txt, this file's tables) is evidence.

@@ -31,7 +31,7 @@ no pull request ready or merged. Rules 2 to 5, the bet and the acceptance are th
 | G1 on pharzam/layup-uat-m2e2 | would stop (floor above the limit by 1 at 110); not run at the time | computed 2026-10-23: `G1 floor=91 limit=90 stop=yes` at 110 (and limit=80 at 100); see "G1" |
 | G2 | not reached | no bet; G2 (`brief-bound.sh C HEAD`) was not computed on either target |
 | AC1, the demo holds | not met in full | closed as partly demonstrated by the Operator (6358553535) |
-| AC2 the actors | held for the acts that ran | see "AC2" |
+| AC2 the actors | held for the subset demonstrated; unproved for the ruleset applies (#495) | see "AC2" |
 
 ## Rule 1 in detail (README rule 1, clauses a to d, read from records.txt and sessions.tsv)
 
@@ -100,7 +100,7 @@ The decisions with one survivor are decided; those with several wait for the bet
 | The setup apply (two rulesets on each target) | by construction the Operator's login (commands.sh run by the Operator); not read from the forge | the rulesets exist and are active on both targets (m2e 25579592 and 25579594; m2e2 25654658 and 25654661); `rulesets/<id>/history` answers 403 to the App, so the Operator's authorship of the apply is not an authenticated forge answer |
 | Reviews | none | `pulls/N/reviews` is `[]` for all 7 pull requests (m2e #4, #5; m2e2 #4, #5, #7, #8, #9); no review_requested, ready_for_review or merged event in any timeline |
 
-Verdict: AC2 holds for the acts that ran, with the one stated limit (the ruleset apply is the Operator's by construction, not by a forge answer). Every write of LAYUP shows the App's bot; the Operator's acts are the root and setup pushes, the answers, the `set` and the `cycle`.
+Verdict: AC2 holds for the subset that was demonstrated, and is unproved for the ruleset applies. Held: the records commits, the pull requests and the statuses are the App's bot; every pull request's reviews are `[]`; the Operator's comments are the Operator's. Unproved: authenticated forge evidence that the Operator made the two ruleset applies on each target (the ruleset history answered 403 to the App, so the apply is the Operator's only by construction); carried to #495. AC2 stays open.
 
 ## The pre-registered scenario
 
