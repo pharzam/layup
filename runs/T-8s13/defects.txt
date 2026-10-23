@@ -1,0 +1,34 @@
+# T-8s13 defects.txt: each defect the demo of M2e found, with its issue, pull request, merge commit and the run that found it.
+# Read from the forge on 2026-10-23 (issues and timelines of pharzam/layup, reads only); the runs are the logs of runs.txt.
+# A defect the demo finds is a task of its own (docs/spec/loop.md, The demo and the release review); no repair was made on branch T-8s13.
+
+## The defects fixed (each its own task; the issue is closed and its pull request merged into main)
+
+| Issue | Task | Defect | Found by (run, evidence) | Pull request | Merge commit | Merged |
+| ----- | ---- | ------ | ------------------------ | ------------ | ------------ | ------ |
+| #471 | T-36xw | The bet brief is over brief.lines before any word: one fact line per Intake answer | the plan review 6318615462 (condition 1) on the M2d records; confirmed by G1 on m2e (g1.txt: floor 82 at limit 80) | #472 | 76dfb684fc7da2a745d1b49fe4db94fa8c05ad37 | 2026-10-21T16:33:30Z |
+| #473 | T-c3zv | The options prompt says "a dash" where the reader requires the em dash (U+2014) | R5 (r5.txt, 2026-10-21T19:02:24Z) and R5b (r5b.txt, 19:05:16Z): sessions S-c6c8a413 and S-767ba9b2 refused (comment 6333495708) | #474 | 6cc05cb23d0c088da899542e1b3255917c55c642 | 2026-10-22T06:13:29Z |
+| #475 | T-qjjd | A crashed task session stops the loop for good: give it one new attempt | R5c (r5c.txt, 2026-10-22T06:13:57Z): plan review S-38157561 ended crash (comment 6334696333) | #477 | 0e4f330de1188a4e19690bc88440e62b477976e8 | 2026-10-22T09:24:36Z |
+| #478 | T-0sj8 | A plan review is refused for an artifact row of its own comment file, and the stop is final | R5d (r5d.txt, 2026-10-22T09:26:42Z): S-141cc16c refused artifact (comment 6338065912) | #481 | 5d13785e1962a953499e1fef0a25f944ef51ce04 | 2026-10-22T11:03:42Z |
+| #479 | T-yngf | A failed restart keeps the lease held, so the next one waits 3 x lease.H (30 minutes) | R5b, R5c and R5d, each restart after a failed one (lease held, heartbeat unchanged for 1800 s; the issue's own account) | #485 | ae2997a61bebecdfe912163b0d35f9ab37b9ac80 | 2026-10-22T12:12:38Z |
+| #483 | T-t94t | A rejected plan stops the task for good: send it back to the planner | R5e (r5e.txt, 2026-10-22T11:04:25Z), again in R5f (r5f.txt, 12:13:18Z): handoff plan review to developer invalid verdict-field comment 6339776504-1 (comment 6339835815) | #487 | 8f2f01c0a80951e2ee5b4fa8f012a367d72ea585 | 2026-10-22T14:10:34Z |
+| #488 | T-paan | Only the specification step knows that the MoSCoW and Phase cells and the facts record are the bet's | R5g (r5g.txt, 2026-10-22T14:11:10Z): attempts 4 and 5 of T-ut9g, the verifier's material findings and the review-cycle cap wait (comment 6343457609) | #490 | db71ef5c6df6f08c6dcc65436856e8fad59600e9 | 2026-10-22T15:52:47Z |
+| #491 | T-dtw6 | A task session edits a rule path to keep a document current, and the refusal is final | e2-r5 (e2-r5.txt, 2026-10-22T16:13:35Z), on m2e2: T-am8b S-06aeffc9 refused rule-path (comment 6345991381) | #492 | 3efd52b8fa437daf1def307890821593f6bebcec | 2026-10-22T17:59:47Z |
+| #493 | T-0xr7 | An architecture task's verifier finds the bet's decisions material, and a task at the cycle cap cannot be continued | e2-r6 (e2-r6.txt, 2026-10-22T18:00:17Z): T-am8b at the cap wait (comment 6347941149); the grant ran in e2-r7 (2026-10-23T05:50:19Z), which ended `not mergeable, findings recorded` | #494 | 8e3a2e9783cbde44263f556d264b3ed80b3f3960 | 2026-10-23T05:49:55Z |
+
+The pull requests are the ones whose title or timeline closes the issue (#481 closes #478; the cross-reference of #481 from #475 and #480 is a mention). The release check
+after each rebuild is in test-runs.md.
+
+## The off-path issues (found by a review round or a read of the code, not on the path of the demo; all open, no pull request)
+
+| Issue | Defect | Found by | Pull request | Merge commit |
+| ----- | ------ | -------- | ------------ | ------------ |
+| #476 | The stderr tail of a failed task session is lost: keep it, with every known secret replaced | the crash of S-38157561 in R5c; split out of #475 by the Operator after the plan review of #475 (the issue's own account) | none (open) | none |
+| #480 | A flaky integration test: Start's records push to a file:// remote fails once under load | round 1 of #478 (T-0sj8, Claude Fable 5.1) | none (open) | none |
+| #482 | git walks up into an enclosing repository when a LAYUP directory has no .git (no GIT_CEILING_DIRECTORIES) | round 1 of #479 (T-yngf, comment 6339265866, note 1) | none (open) | none |
+| #484 | Harden the lease-loss noting of #479: call-site guard, falsifiers, the joined beat, a timing margin | round 2 of #479 (comment 6339953673) | none (open) | none |
+| #489 | Embed the bet-brief golden in its unit test: the unit level reads a fixture file | round 2 of #488 (T-paan, GPT-6 Astra, note 2) | none (open) | none |
+
+## The follow-up
+
+#495 (open): the demo of M2e, the remaining steps (the bet, loop's merges, rule 5 and the acceptance) on a real target, after the milestone that gives an answer at a wait; and AC2's missing proof, authenticated forge evidence of the Operator's ruleset applies.

@@ -3071,7 +3071,7 @@ Defined here, as acceptance contracts; the rows, their IDs, issues and the input
 that each asks are the slicing task's.
 
 **The demo** (REQ-015) is the last row of the table: on a real GitHub test target
-that `M2d` set up, a specification task goes through the loop, Shape runs with its
+that the Scaffold (the steps of `M2d`) set up, a specification task goes through the loop, Shape runs with its
 filter, the idea owner answers the brief with one comment, the rendered commit is
 added, and the task merges at its head SHA with the four statuses `success`. As the
 demo of `M2d` held five rules (`runs/T-sdtb/README.md`), this one passes when each of
@@ -3082,14 +3082,16 @@ Phase columns, the non-goals and the facts record; (3) the four `layup/` statuse
 that head `H` as its `sha`, and the recorded `merged` event holds the merge commit `M` (whose second parent is `H`) and the number of the pull request; (5) a pull request that weakens its own gate is
 refused. The evidence is kept under `runs/` by the slicing task's demo row, the Operator
 accepts the scenario in one word before the review, and a defect that the demo
-finds is a task of its own. **The inputs** it needs from the Operator (for the
-slicing task to ask): the commit-statuses, pull-requests and checks `read` permissions of the App, at least
+finds is a task of its own (the repair rule of the e2e above does not apply to the demo). **A code-owner review**, if one occurs, is the Operator's; in the demo none occurs
+(no pull request of LAYUP touches a code-owner path, and the Operator authors the pull request of rule 5), so the demo reads the reviews of every pull request from the forge and
+requires `[]` (**one reading**, R13, the Operator's decision of 2026-10-21 on #370, comment 6321600725). **The inputs** it needs from the Operator (for the
+slicing task to ask): the App's permissions (pull requests and commit statuses `write`, checks `read`, as [`forge.md`](forge.md#the-calls-of-m2e) lists them), at least
 two admitted harnesses (`architecture.md` §9), the confirmation of the reading of
 `F-0003#58` (a pull request "reaches human review" when a review is requested or it is
 marked ready), a target whose plan allows draft pull requests (GitHub refuses a draft
 pull request in a private repository of the Free plan, so the target is public or on a
 plan that allows it),
-the `CODEOWNERS` apply, the value of `brief.lines`, and the idea owner's account.
+the Operator's apply of the code-owner rule (`CODEOWNERS` and the ruleset), the value of `brief.lines`, and the idea owner's account.
 
 **The review of the release** (REQ-015 and REQ-017) is a recorded code review of the
 release of `M2e` by a reviewer of a model that wrote none of it, with the release
